@@ -1,0 +1,59 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.32">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.7"/>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.65">
+    <script>pipeline {
+
+  environment {
+    registry = &quot;docker_hub_account/repository_name&quot;
+    registryCredential = &apos;dockerhub&apos;
+  }
+
+agent any
+//    agent {
+//       docker { image &apos;node:7-alpine&apos; }
+//   }
+
+  stages {
+    stage(&apos;Cloning Git&apos;) {
+      steps {
+        git &apos;https://github.com/laradock/laradock.git&apos;
+      }
+    }
+    stage(&apos;Fetch dependencies&apos;) {
+        /* This stage pulls the latest nginx image from
+           Dockerhub */
+      steps {
+          sh &apos;sudo docker pull nginx:latest&apos;
+      }
+    }
+    stage(&apos;Build image&apos;) {
+      steps {
+           echo &apos;Starting to build docker image&apos;
+           sh &apos;pwd&apos;
+           sh &quot;sudo docker build nginx -t ${env.JOB_NAME}:${env.BUILD_ID} --no-cache&quot;
+
+          // script {
+          //   def customImage = docker.build(&quot;nginx-docker:${env.BUILD_ID}&quot;, &quot;nginx&quot;)
+          //   //customImage.push()
+          // }
+        }
+      }
+    stage(&apos;Test image&apos;) {
+         /* This stage runs unit tests on the image; we are
+            just running dummy tests here */
+       steps {
+            sh &apos;echo &quot;Tests successful&quot;&apos;
+      }
+    }
+  }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
